@@ -115,6 +115,15 @@ Full list: Paul Irish's "What forces layout/reflow" (https://gist.github.com/pau
 | Frame Rendering Stats | Top-right | Real-time FPS, GPU raster, memory |
 | Scrolling Performance Issues | Highlighted | Scroll listeners harming perf |
 
+## Agent Browser Tools
+
+When you need to interact with a live browser during investigation:
+
+- **`chrome-cdp`**: Quick inspection of a tab the user already has open. Use for screenshots, JS eval, accessibility snapshots, clicking elements. Lightweight CLI -- no server, no Playwright. Good for "look at this tab and tell me what's happening."
+- **`dev-browser`**: Full Playwright-based automation with persistent named pages. Use for multi-step workflows, scripted repro sequences, PerformanceObserver injection, request interception, headless CI runs.
+
+Pick `chrome-cdp` for one-shot inspection, `dev-browser` for scripted investigation.
+
 ## Escalation
 
 If the selector-level probe already proved a stable surface was replaced, stay on the React path first.

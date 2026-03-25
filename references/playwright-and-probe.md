@@ -88,6 +88,13 @@ Playwright exposes full Chrome DevTools Protocol via `page.context().newCDPSessi
 
 These prevent Chrome from throttling timers and rendering when the window is not focused.
 
+## Agent Browser Tools
+
+When building or running a probe:
+
+- **`dev-browser`**: Preferred for probe work. Launches its own Chromium with persistent named pages. Use for scripted interaction sequences, PerformanceObserver injection via `page.evaluate()`, screenshot capture, and headless CI runs. The `page` object is a standard Playwright Page.
+- **`chrome-cdp`**: Use for quick one-shot inspection of a tab the user already has open (screenshot, eval, accessibility snapshot). Not suited for scripted multi-step probes.
+
 ## Escalation Rule
 
 If the probe explains the symptom, inspect source and fix it.
