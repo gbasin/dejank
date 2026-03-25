@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dejank"
+  short_description: "Detect and diagnose visual jank in React UIs"
+  default_prompt: "Use $dejank to scan for visual instability patterns or diagnose a specific rendering complaint in this frontend."
