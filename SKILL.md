@@ -22,10 +22,10 @@ If unsure, start with Mode A. Its findings often explain the complaint without r
 
 Use when: reviewing a PR, scanning changed files, doing a preventive sweep, or no specific symptom is reported.
 
-1. Read [references/static-patterns.md](./references/static-patterns.md) for the 14-pattern catalog.
+1. Read [references/static-patterns.md](./references/static-patterns.md) for the 18-pattern catalog.
 2. Read [references/scan-process.md](./references/scan-process.md) for scope rules, severity rubric, output format, and guardrails.
 3. Identify scope: changed files in the current branch (`git diff --name-only` against base), or the user-specified target and its direct imports.
-4. Scan each React component against all 14 patterns.
+4. Scan each React component against all 18 patterns.
 5. Report findings grouped by component, ranked by severity.
 
 Stop here unless a finding warrants runtime confirmation or the user escalates.

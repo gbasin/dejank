@@ -16,7 +16,7 @@ This skill operates in two modes based on a decision tree:
 
 **Mode A — Static Analysis** (pre-merge review, no specific complaint)
 
-Scans React components against 14 anti-patterns that produce visual jank:
+Scans React components against 18 anti-patterns that produce visual jank:
 
 | # | Pattern | Severity |
 |---|---------|----------|
@@ -34,6 +34,10 @@ Scans React components against 14 anti-patterns that produce visual jank:
 | 12 | Missing `startTransition` for expensive updates | Low |
 | 13 | Ref callback remount | Medium |
 | 14 | Z-index / stacking context flash | Low |
+| 15 | Font flash (FOUT/FOIT) | High |
+| 16 | Unstable context value | High |
+| 17 | Component defined inside component | Critical |
+| 18 | Async waterfall in component tree | High |
 
 **Mode B — Runtime Investigation** (user reports a specific visual symptom)
 
@@ -50,7 +54,7 @@ Classifies the symptom, then routes to the lightest investigation path that can 
 SKILL.md                          Decision tree entrypoint (91 lines)
 agents/openai.yaml                Codex UI metadata
 references/
-  static-patterns.md              14 anti-pattern catalog
+  static-patterns.md              18 anti-pattern catalog
   scan-process.md                 Scope, severity, output format, guardrails
   playwright-and-probe.md         Runtime: Playwright probe path
   react-path.md                   Runtime: React DevTools investigation

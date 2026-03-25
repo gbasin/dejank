@@ -72,7 +72,9 @@ useEffect(() => {
 
 **When this is fine**: Lazy rendering of expensive components that aren't needed. Modal open/close where you *want* state reset.
 
-**Fix**: Use CSS to hide instead of unmounting:
+**Fixes** (in order of preference):
+1. **React 19.2+**: Use `<Activity mode={isOpen ? "visible" : "hidden"}>` -- preserves state, hides DOM, destroys effects, deprioritizes hidden updates. The first-party solution for coarse-grained show/hide.
+2. Use CSS to hide instead of unmounting:
 ```tsx
 // STABLE: component stays mounted, no remount flash
 <Panel className={isOpen ? 'visible' : 'hidden'} />
@@ -222,7 +224,7 @@ function handleResize() {
 
 ---
 
-### 13. Ref Callback / forwardRef Remount (Medium)
+### 13. Ref Callback Remount (Medium -- reduced with React Compiler)
 
 **What to find**: Inline ref callbacks that create a new function identity every render.
 
@@ -235,6 +237,11 @@ function handleResize() {
 
 **Fix**: Memoize the ref callback with `useCallback`, or use a ref object (`useRef`).
 
+**React 19 notes**:
+- `forwardRef` is deprecated -- refs are now passed as regular props.
+- React Compiler auto-memoizes inline ref callbacks, reducing relevance in compiled projects. Check for the DevTools sparkle badge -- if the component is compiled, this pattern is likely handled.
+- Ref callbacks can now return a cleanup function (like `useEffect`). React calls the cleanup on unmount instead of calling the ref with `null`.
+
 ---
 
 ### 14. Z-Index / Stacking Context Flash (Low)
@@ -244,3 +251,81 @@ function handleResize() {
 **What the user sees**: An element briefly appears above/below where it should be.
 
 **Fix**: Keep the stacking context stable -- apply `position: relative` and `z-index` unconditionally if the element participates in stacking.
+
+---
+
+### 15. Font Flash -- FOUT/FOIT (High)
+
+**What to find**: Custom font loading without preloading or `font-display` control. In Next.js: using `<link href="fonts.googleapis.com/...">` instead of `next/font`.
+
+**What the user sees**: Text renders in a fallback font then swaps to the custom font (FOUT -- Flash of Unstyled Text), or text is invisible until the font loads (FOIT -- Flash of Invisible Text). Both cause layout shift when glyph metrics differ.
+
+**Fixes**:
+1. Use `font-display: optional` -- if the font isn't cached, skip it entirely (zero flash)
+2. Preload critical fonts: `<link rel="preload" href="font.woff2" as="font" crossorigin>`
+3. Use font metric overrides (`size-adjust`, `ascent-override`, `descent-override`) to match fallback glyph metrics
+4. In Next.js: use `next/font` which handles preloading and metric overrides automatically
+
+---
+
+### 16. Unstable Context Value (High)
+
+**What to find**: A `Context.Provider` whose `value` prop is a new object/array literal on every render.
+
+```tsx
+// BAD: new object every render -> all consumers re-render every time parent renders
+<ThemeContext.Provider value={{ theme, toggleTheme }}>
+```
+
+**What the user sees**: Unrelated parts of the UI re-render and potentially flicker when a parent component updates, even if the context value hasn't meaningfully changed.
+
+**Fix**: Memoize the value:
+```tsx
+const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
+<ThemeContext.Provider value={value}>
+```
+
+**Note**: React Compiler auto-memoization mitigates this but does not eliminate all cases. `@eslint-react/no-unstable-context-value` catches it statically.
+
+---
+
+### 17. Component Defined Inside Component (Critical)
+
+**What to find**: A function component defined inside another component's render body.
+
+```tsx
+function Parent() {
+  // BAD: ChildPanel is a new component type every render -> full remount every time
+  function ChildPanel() {
+    return <div>{/* ... */}</div>;
+  }
+  return <ChildPanel />;
+}
+```
+
+**What the user sees**: The inner component fully remounts on every parent render -- all state is destroyed, DOM is rebuilt, animations restart. Visually identical to an unstable key.
+
+**Fix**: Move the component definition outside the parent function. If it needs parent scope, pass values as props.
+
+---
+
+### 18. Async Waterfall in Component Tree (High)
+
+**What to find**: Sequential data fetching in nested components where a child cannot start fetching until its parent renders with data.
+
+```tsx
+// BAD: waterfall -- parent fetches, renders child, child fetches, renders grandchild
+function Dashboard() {
+  const { data: user } = useQuery('user');
+  if (!user) return <Spinner />;
+  return <UserProjects userId={user.id} />;  // fetches after parent resolves
+}
+```
+
+**What the user sees**: Cascading loading states -- each level adds a full round-trip of latency before the next level can even start. Content pops in section by section.
+
+**Fixes**:
+1. Hoist fetches to the top level and fetch in parallel
+2. Use React Server Components with parallel data loading
+3. Use framework-level data loading (`loader` in Remix/React Router, `generateMetadata`/`fetch` in Next.js Server Components)
+4. Use `<Suspense>` with parallel `use()` or `useSuspenseQuery` calls
