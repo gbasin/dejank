@@ -117,12 +117,7 @@ Full list: Paul Irish's "What forces layout/reflow" (https://gist.github.com/pau
 
 ## Agent Browser Tools
 
-When you need to interact with a live browser during investigation:
-
-- **chrome-cdp** (`npx skills add pasky/chrome-cdp-skill --all -g`): Quick inspection of a tab the user already has open. Use for screenshots, JS eval, accessibility snapshots, clicking elements. Lightweight CLI -- no server, no Playwright. Good for "look at this tab and tell me what's happening."
-- **[dev-browser](https://github.com/SawyerHood/dev-browser)** (`npx skills add sawyerhood/dev-browser --all -g`): Full Playwright-based automation with persistent named pages. Use for multi-step workflows, scripted repro sequences, PerformanceObserver injection, request interception, headless CI runs.
-
-Pick `chrome-cdp` for one-shot inspection, `dev-browser` for scripted investigation.
+See [tooling-and-signals.md § Agent Browser Tools](./tooling-and-signals.md#agent-browser-tools) for chrome-cdp vs dev-browser guidance.
 
 ## Escalation
 

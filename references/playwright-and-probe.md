@@ -90,10 +90,7 @@ These prevent Chrome from throttling timers and rendering when the window is not
 
 ## Agent Browser Tools
 
-When building or running a probe:
-
-- **[dev-browser](https://github.com/SawyerHood/dev-browser)** (`npx skills add sawyerhood/dev-browser --all -g`): Preferred for probe work. Launches its own Chromium with persistent named pages. Use for scripted interaction sequences, PerformanceObserver injection via `page.evaluate()`, screenshot capture, and headless CI runs. The `page` object is a standard Playwright Page.
-- **chrome-cdp** (`npx skills add pasky/chrome-cdp-skill --all -g`): Use for quick one-shot inspection of a tab the user already has open (screenshot, eval, accessibility snapshot). Not suited for scripted multi-step probes.
+See [tooling-and-signals.md § Agent Browser Tools](./tooling-and-signals.md#agent-browser-tools) for chrome-cdp vs dev-browser guidance. For probe work, prefer dev-browser (Playwright-based, scripted sequences, persistent pages).
 
 ## Escalation Rule
 

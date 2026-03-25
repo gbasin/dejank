@@ -25,6 +25,8 @@ useEffect(() => {
 
 **Special case**: When the initial state is read from `localStorage`, `sessionStorage`, `document.cookie`, or similar browser APIs -- same pattern, same fix (lazy initializer).
 
+**Verify**: The `useState` initializer computes the correct value directly. The `useEffect` that called the setter is removed or converted to `useLayoutEffect` if a ref read is required.
+
 ---
 
 ### 2. Derived State in Effects (High)
@@ -43,6 +45,8 @@ useEffect(() => {
 
 **Fix**: Compute during render -- `const filtered = useMemo(() => items.filter(...), [items])` -- or just inline it if cheap.
 
+**Verify**: The `useEffect` + `setState` pair is gone, replaced by inline computation or `useMemo`. The derived value updates in the same render as its source.
+
 ---
 
 ### 3. Chained Effect Cascade (High)
@@ -52,6 +56,8 @@ useEffect(() => {
 **What the user sees**: Cascading visual updates -- elements shifting, appearing, or changing in sequence over 2-4 frames instead of all at once.
 
 **Fix**: Collapse into a single state update. Use `useReducer` if the logic is complex, or compute derived values during render. If effects are truly independent and order doesn't matter, they can stay separate -- but if B depends on A's state, they should be one unit.
+
+**Verify**: The chain of effects is collapsed. A single state change produces one render cycle, not multiple sequential re-renders.
 
 ---
 
@@ -84,6 +90,8 @@ useEffect(() => {
 
 **Judgment call**: Flag this as a finding but note that not every conditional render is a bug -- flag specifically when the condition is tied to state that changes during user interaction (hover, focus, animation, toggle).
 
+**Verify**: The component stays mounted across the toggle. Internal state persists and CSS enter animations do not replay.
+
 ---
 
 ### 5. Unstable Key Props (High)
@@ -99,6 +107,8 @@ useEffect(() => {
 **What the user sees**: Component flashes/blinks on every re-render. Animations restart. Input fields lose focus.
 
 **Fix**: Use a stable identifier. If using index, ensure the list never reorders or filters.
+
+**Verify**: The `key` prop uses a stable identifier. Grep for the old unstable expression to confirm it is removed.
 
 ---
 
@@ -121,6 +131,8 @@ useEffect(() => {
 
 **Fix**: Set explicit `width`+`height` attributes, or use CSS `aspect-ratio`. For dynamic content, use a skeleton placeholder with the correct dimensions.
 
+**Verify**: The element has explicit `width`+`height` attributes or CSS `aspect-ratio`. Content below does not shift when the async content loads.
+
 ---
 
 ### 7. Skeleton/Placeholder Absence (Medium)
@@ -137,6 +149,8 @@ return <DataTable rows={data} />;
 
 **Fix**: Use a skeleton that matches the loaded component's dimensions. Or use `min-height` on the container.
 
+**Verify**: Loading and loaded states have matching outer dimensions. The layout does not jump when data arrives.
+
 ---
 
 ### 8. Suspense Boundary Flash (Medium)
@@ -148,6 +162,8 @@ return <DataTable rows={data} />;
 **What the user sees**: A loading spinner/skeleton blinks for a split second.
 
 **Fix**: Wrap the state update that triggers the Suspense in `startTransition` -- React will keep showing the old UI while the new content loads, avoiding the flash. For short fetches, set a minimum delay on the loading state display.
+
+**Verify**: Navigate to the Suspense-wrapped content. The previous UI stays visible during short loads instead of flashing a fallback.
 
 ---
 
@@ -170,7 +186,9 @@ return <DataTable rows={data} />;
 
 **Fix**: Use a hydration-safe pattern -- `useEffect` to set a `mounted` flag, then conditionally render. Or use the framework's client-only wrapper (`next/dynamic` with `ssr: false`, Remix `ClientOnly`).
 
-**Skip this check** if the project has no SSR/SSG (pure client-side SPA).
+**SSR detection**: Check for `next.config.*`, `remix.config.*`, `astro.config.*`, or exports like `getServerSideProps`, `generateStaticParams`, `loader`, `getStaticProps` in route files. Also check for `hydrateRoot` or `renderToPipeableStream` in entry files. If none found, skip this pattern -- the project is a pure client-side SPA.
+
+**Verify**: Server and client render identical initial HTML. No React hydration warnings appear in the browser console. The client-only content uses a hydration-safe pattern (`useEffect` + mounted flag, or framework client-only wrapper).
 
 ---
 
@@ -192,6 +210,8 @@ function handleResize() {
 
 **Fix**: Batch all reads, then batch all writes. Or use `requestAnimationFrame`. Or better -- use CSS for the layout logic so the browser handles it.
 
+**Verify**: DOM reads and writes are batched separately. No forced reflow warnings appear in the Chrome Performance panel during the interaction.
+
 ---
 
 ### 11. Animating Layout Properties (Medium)
@@ -212,6 +232,8 @@ function handleResize() {
 
 **Tailwind-specific**: Flag `transition-all` -- it transitions every property including layout ones. Use `transition-transform`, `transition-opacity`, or `transition-colors` instead.
 
+**Verify**: Animations target only `transform` and `opacity`. No layout recalculations per frame in the Performance panel. In Tailwind, `transition-all` is replaced with a specific transition utility.
+
 ---
 
 ### 12. Missing `startTransition` for Expensive Updates (Low)
@@ -221,6 +243,8 @@ function handleResize() {
 **What the user sees**: UI freezes momentarily -- input feels laggy, buttons feel unresponsive.
 
 **Fix**: Wrap non-urgent updates in `startTransition` to let React yield to the browser for paint between renders.
+
+**Verify**: The UI remains responsive during the update. Typing or clicking does not feel laggy while the expensive re-render is in progress.
 
 ---
 
@@ -242,6 +266,8 @@ function handleResize() {
 - React Compiler auto-memoizes inline ref callbacks, reducing relevance in compiled projects. Check for the DevTools sparkle badge -- if the component is compiled, this pattern is likely handled.
 - Ref callbacks can now return a cleanup function (like `useEffect`). React calls the cleanup on unmount instead of calling the ref with `null`.
 
+**Verify**: The ref callback has stable identity (memoized with `useCallback` or using `useRef`). Focus and measurements are not disrupted on re-render.
+
 ---
 
 ### 14. Z-Index / Stacking Context Flash (Low)
@@ -251,6 +277,8 @@ function handleResize() {
 **What the user sees**: An element briefly appears above/below where it should be.
 
 **Fix**: Keep the stacking context stable -- apply `position: relative` and `z-index` unconditionally if the element participates in stacking.
+
+**Verify**: Stacking context properties (`position`, `z-index`) are applied unconditionally. The element does not visually pop between layers during state changes.
 
 ---
 
@@ -265,6 +293,8 @@ function handleResize() {
 2. Preload critical fonts: `<link rel="preload" href="font.woff2" as="font" crossorigin>`
 3. Use font metric overrides (`size-adjust`, `ascent-override`, `descent-override`) to match fallback glyph metrics
 4. In Next.js: use `next/font` which handles preloading and metric overrides automatically
+
+**Verify**: Hard-refresh the page. Text renders in the final font immediately (or the fallback is visually identical via metric overrides). No visible font swap or layout shift from glyph metric differences.
 
 ---
 
@@ -287,6 +317,8 @@ const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
 
 **Note**: React Compiler auto-memoization mitigates this but does not eliminate all cases. `@eslint-react/no-unstable-context-value` catches it statically.
 
+**Verify**: The `value` prop is memoized. Context consumer components do not re-render when the provider's parent updates but the context value has not changed.
+
 ---
 
 ### 17. Component Defined Inside Component (Critical)
@@ -306,6 +338,8 @@ function Parent() {
 **What the user sees**: The inner component fully remounts on every parent render -- all state is destroyed, DOM is rebuilt, animations restart. Visually identical to an unstable key.
 
 **Fix**: Move the component definition outside the parent function. If it needs parent scope, pass values as props.
+
+**Verify**: The inner component is defined outside the parent function. It retains state across parent re-renders and does not remount.
 
 ---
 
@@ -329,3 +363,5 @@ function Dashboard() {
 2. Use React Server Components with parallel data loading
 3. Use framework-level data loading (`loader` in Remix/React Router, `generateMetadata`/`fetch` in Next.js Server Components)
 4. Use `<Suspense>` with parallel `use()` or `useSuspenseQuery` calls
+
+**Verify**: Open the browser Network tab and trigger the data loading. Fetches that were previously sequential now start in parallel (overlapping in the waterfall view).

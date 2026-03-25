@@ -162,3 +162,12 @@ Use report-only first. Promote these to assertions only after the interaction is
 | Max frame gap | `< 75ms` | ~4 dropped frames at 60fps |
 
 If the app intentionally resets a full workspace, mark that interaction as a controlled remount instead of pretending it is stable.
+
+## Agent Browser Tools
+
+When you need to interact with a live browser during investigation:
+
+- **chrome-cdp** (`npx skills add pasky/chrome-cdp-skill --all -g`): Quick inspection of a tab the user already has open. Screenshots, JS eval, accessibility snapshots. Lightweight -- no server, no Playwright. Use for one-shot inspection.
+- **[dev-browser](https://github.com/SawyerHood/dev-browser)** (`npx skills add sawyerhood/dev-browser --all -g`): Full Playwright-based automation with persistent named pages. Use for scripted interaction sequences, PerformanceObserver injection, request interception, headless CI runs. The `page` object is a standard Playwright Page.
+
+Pick chrome-cdp for "look at this tab," dev-browser for scripted multi-step investigation.

@@ -62,6 +62,11 @@ Do not start with a heavyweight trace unless the lighter pass fails to explain t
 
 Each reference file contains its own escalation rules. Move to the next layer only when the current one is insufficient.
 
+### Done Criteria
+
+- You can state the likely cause AND either provide a code fix or identify what telemetry to add.
+- Max escalation depth: 2 layers. If the second investigation path doesn't explain the symptom, report what you found and what remains unknown. Do not keep escalating.
+
 ---
 
 ## Hybrid: Static + Runtime
