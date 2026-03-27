@@ -51,7 +51,7 @@ Classifies the symptom, then routes to the lightest investigation path that can 
 ## Structure
 
 ```
-SKILL.md                          Decision tree entrypoint (91 lines)
+SKILL.md                          Decision tree entrypoint
 agents/openai.yaml                Codex UI metadata
 references/
   static-patterns.md              Anti-pattern catalog
@@ -62,17 +62,3 @@ references/
   field-path.md                   Runtime: production telemetry
   tooling-and-signals.md          Tool decision matrix + budgets
 ```
-
-## Agent support
-
-Harness-agnostic. Works with any agent that follows the [skills convention](https://skills.sh):
-
-- **Claude Code**: `/dejank` or `/dejank src/components/`
-- **Codex**: `$dejank` or `$dejank src/components/`
-- **Others**: Discovered via root `SKILL.md` with standard frontmatter
-
-## Credits
-
-Combines two independently developed skills:
-- Static analysis catalog from a Claude Code session (Opus 4.6)
-- Runtime diagnostic workflow from a Codex session (GPT-5.4)
